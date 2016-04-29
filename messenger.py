@@ -7,10 +7,16 @@ import requests
 import sys
 import os
 import logging
+from urllib import quote
+import urllib2
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 TOKEN = os.environ['MESSENGER_TOKEN']
 WEBHOOK_TOKEN = os.environ['WEBHOOK_TOKEN']
+TEEMILL_API_KEY = os.environ['TEEMILL_API_KEY']
+
+TEEMILL_URL = 'https://rapanuiclothing.com/api-access-point/?api_key='+TEEMILL_API_KEY+'&item_code=RNA1&colour=White&image_url='
 
 class Bot(object):
     def __init__(self, access_token):
@@ -30,7 +36,7 @@ class Bot(object):
         return requests.post(self.base_url, json=payload).json()
 
 
-    def send_generic_message(self, recipient_id, elements):
+    def send_generic_message(self, recipient_id, product_url, image_url):
         payload = {'recipient': {'id': recipient_id},
                    'message': {
                                 "attachment": {
@@ -40,10 +46,10 @@ class Bot(object):
                                         "elements": [{
                                             "title": "Here's your T-Shirt!",
                                             "subtitle": "Buy it now for only $20!",
-                                            "image_url": "http://messengerdemo.parseapp.com/img/rift.png",
+                                            "image_url": image_url,
                                             "buttons": [{
                                                 "type": "web_url",
-                                                "url": "https://www.messenger.com/",
+                                                "url": product_url,
                                                 "title": "Buy it now!"
                                             }]
                                         }]
@@ -63,6 +69,26 @@ def init_logging(logger):
     logger.addHandler(handler)
 
 
+def get_product_url(image_url):
+    encoded_image_url = quote(image_url)
+    print encoded_image_url
+    temp_teemill_url = TEEMILL_URL + encoded_image_url
+    print temp_teemill_url
+    product_url = urllib2.urlopen(temp_teemill_url).read()
+    print product_url
+    return product_url
+
+
+def get_tshirt_image_url(product_url):
+    product_page = urllib2.urlopen(product_url).read()
+    soup = BeautifulSoup(product_page, "html.parser")
+    meta_tag_data = soup.findAll(attrs={"property":"og:image"})
+    print meta_tag_data
+    image_url = meta_tag_data[0]['content']
+    print image_url
+    return image_url
+
+
 @app.route("/webhook", methods=['GET', 'POST'])
 def hello():
     if request.method == 'GET':
@@ -78,7 +104,13 @@ def hello():
             if (x.get('message') and x['message'].get('text')):
                 message = x['message']['text']
                 recipient_id = x['sender']['id']
-                print bot.send_generic_message(recipient_id, message)
+
+                image_url = 'https://pbs.twimg.com/media/Cg6rupTWwAQCern.jpg'
+
+                product_url = get_product_url(image_url)
+                tshirt_image_url = get_tshirt_image_url(product_url)
+
+                print bot.send_generic_message(recipient_id, product_url, tshirt_image_url)
         return "success"
 
 if __name__ == "__main__":
