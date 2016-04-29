@@ -32,14 +32,24 @@ class Bot(object):
 
     def send_generic_message(self, recipient_id, elements):
         payload = {'recipient': {'id': recipient_id},
-                   'message': { "attachment": {
-                                "type": "template",
-                                "payload": {
-                                    "template_type": "generic",
-                                    "elements": elements
+                   'message': {
+                                "attachment": {
+                                    "type": "template",
+                                    "payload": {
+                                        "template_type": "generic",
+                                        "elements": [{
+                                            "title": "Here's your T-Shirt!",
+                                            "subtitle": "Buy it now for only $20!",
+                                            "image_url": "http://messengerdemo.parseapp.com/img/rift.png",
+                                            "buttons": [{
+                                                "type": "web_url",
+                                                "url": "https://www.messenger.com/",
+                                                "title": "Buy it now!"
+                                            }]
+                                        }]
                                     }
                                 }
-                              }
+                            }
                    }
         return requests.post(self.base_url, json=payload).json()
 
@@ -68,7 +78,7 @@ def hello():
             if (x.get('message') and x['message'].get('text')):
                 message = x['message']['text']
                 recipient_id = x['sender']['id']
-                print bot.send_text_message(recipient_id, message)
+                print bot.send_generic_message(recipient_id, message)
         return "success"
 
 if __name__ == "__main__":
