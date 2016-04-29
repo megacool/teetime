@@ -1,6 +1,7 @@
 from __future__ import division
 
 import nltk
+import tempfile
 import wikipedia
 import random
 import requests
@@ -82,8 +83,9 @@ def create_image(layout):
                 print 'Setting color of %s to %s' % (line, color)
         draw.text((0, offset), line, font=font, fill=color)
         offset += height
-    img.save('testimg.png')
-    img.show()
+    image_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
+    img.save(image_file, 'png')
+    return image_file.name
 
 
 def get_total_height_of_image(width, layout, font_location):
@@ -140,14 +142,15 @@ def get_colors_for_word(word, n=3, recurse=True):
         return None
 
     image_extension = image.rsplit('.', 1)[1]
-    target_file = '/tmp/image.%s' % image_extension
-    with open(target_file, 'wb') as fh:
+    image_file = tempfile.NamedTemporaryFile(suffix='.%s' % image_extension, delete=False)
+    with image_file as fh:
         for chunk in response.iter_content(chunk_size=4096):
             if chunk:
                 fh.write(chunk)
 
-    img = Image.open(target_file)
+    img = Image.open(image_file.name)
     colors = dominant_colors(img, n)
+    os.remove(image_file.name)
     return colors
 
 
