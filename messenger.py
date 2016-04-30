@@ -116,6 +116,7 @@ def hello():
 
                 print bot.send_generic_message(recipient_id, product_url, tshirt_image_url)
             except:
+                _logger.exception('Failed to create image for message: %s', message)
                 response = 'Failed to create image from your message, please try again later'
                 print bot.send_text_message(recipient_id, response)
         return "success"
