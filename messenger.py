@@ -2,20 +2,23 @@
 This bot listens to port 5002 for incoming connections from Facebook. It takes
 in any messages that the bot receives and echos it back.
 """
-from flask import Flask, request
-import requests
-import uuid
-import tinys3
-import sys
-import os
+
 import logging
-from urllib import quote
+import os
+import requests
+import textwrap
+import tinys3
 import urllib2
+import uuid
+import yaml
 from bs4 import BeautifulSoup
+from flask import Flask, request
+from urllib import quote
 
 import teetime
 
 app = Flask(__name__)
+_logger = logging.getLogger(__name__)
 TOKEN = os.environ['MESSENGER_TOKEN']
 WEBHOOK_TOKEN = os.environ['WEBHOOK_TOKEN']
 TEEMILL_API_KEY = os.environ['TEEMILL_API_KEY']
@@ -65,14 +68,6 @@ class Bot(object):
 
 bot = Bot(TOKEN)
 
-def init_logging(logger):
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
-
 def get_product_url(image_url):
     encoded_image_url = quote(image_url)
     print encoded_image_url
@@ -99,7 +94,7 @@ def hello():
         if (request.args.get("hub.verify_token") == WEBHOOK_TOKEN):
             return request.args.get("hub.challenge")
         else:
-            app.logger.info('missing token')
+            _logger.info('missing token')
             return 'missing challenge token', 400
     if request.method == 'POST':
         output = request.json
@@ -138,6 +133,49 @@ def upload_to_s3(path):
     return 'https://%s.s3.amazonaws.com/%s' % (bucket, s3_filename)
 
 
+def generic_error_handler(exception):
+    """ Log exception to the standard logger. """
+    log_msg = textwrap.dedent("""Error occured!
+        Path:                 %s
+        Params:               %s
+        HTTP Method:          %s
+        Client IP Address:    %s
+        User Agent:           %s
+        User Platform:        %s
+        User Browser:         %s
+        User Browser Version: %s
+        HTTP Headers:         %s
+        Exception:            %s
+        """ % (
+            request.path,
+            request.values,
+            request.method,
+            request.remote_addr,
+            request.user_agent.string,
+            request.user_agent.platform,
+            request.user_agent.browser,
+            request.user_agent.version,
+            request.headers,
+            exception
+        )
+    )
+    _logger.exception(log_msg)
+
+
+@app.errorhandler(500)
+def server_error(error):
+    generic_error_handler(error)
+    return 'Oops', 500
+
+
+def _init_logging(app):
+    log_config_dest = app.config.get('LOG_CONF_PATH') or 'log-conf.yaml'
+    if log_config_dest:
+        with open(log_config_dest) as log_config_file:
+            logging.config.dictConfig(yaml.load(log_config_file))
+
+_init_logging(app)
+
+
 if __name__ == "__main__":
-    init_logging(app.logger)
     app.run(port=5002, debug=True)
