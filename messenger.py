@@ -24,7 +24,7 @@ TOKEN = os.environ['MESSENGER_TOKEN']
 WEBHOOK_TOKEN = os.environ['WEBHOOK_TOKEN']
 TEEMILL_API_KEY = os.environ['TEEMILL_API_KEY']
 
-TEEMILL_URL = 'https://rapanuiclothing.com/api-access-point/?api_key='+TEEMILL_API_KEY+'&item_code=RNA1&colour=White&image_url='
+TEEMILL_URL = 'https://rapanuiclothing.com/api-access-point/?api_key='+TEEMILL_API_KEY+'&item_code=RNA1&colour=Black&image_url='
 
 class Bot(object):
     def __init__(self, access_token):
