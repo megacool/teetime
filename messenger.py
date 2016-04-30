@@ -4,12 +4,16 @@ in any messages that the bot receives and echos it back.
 """
 from flask import Flask, request
 import requests
+import uuid
+import tinys3
 import sys
 import os
 import logging
 from urllib import quote
 import urllib2
 from bs4 import BeautifulSoup
+
+import teetime
 
 app = Flask(__name__)
 TOKEN = os.environ['MESSENGER_TOKEN']
@@ -100,18 +104,39 @@ def hello():
     if request.method == 'POST':
         output = request.json
         event = output['entry'][0]['messaging']
-        for x in event:
-            if (x.get('message') and x['message'].get('text')):
-                message = x['message']['text']
-                recipient_id = x['sender']['id']
+        for message_wrapper in event:
+            try:
+                message = message_wrapper['message']['text']
+            except KeyError:
+                continue
 
-                image_url = 'https://pbs.twimg.com/media/Cg6rupTWwAQCern.jpg'
+            try:
+                local_image_path = teetime.create_typography(message)
+                s3_image_url = upload_to_s3(local_image_path)
+                os.remove(local_image_path)
+                recipient_id = message_wrapper['sender']['id']
 
-                product_url = get_product_url(image_url)
+                product_url = get_product_url(s3_image_url)
                 tshirt_image_url = get_tshirt_image_url(product_url)
 
                 print bot.send_generic_message(recipient_id, product_url, tshirt_image_url)
+            except:
+                response = 'Failed to create image from your message, please try again later'
+                print bot.send_text_message(recipient_id, response)
         return "success"
+
+
+def upload_to_s3(path):
+    access_id = os.environ['S3_ACCESS_ID']
+    access_key = os.environ['S3_SECRET_ACCESS_KEY']
+    conn = tinys3.Connection(access_id, access_key, tls=True, endpoint='s3-us-west-2.amazonaws.com')
+    s3_filename = '%s.png' % uuid.uuid4()
+    bucket = 'teetime-prod'
+    with open(path, 'rb') as fh:
+        conn.upload(s3_filename, fh, bucket, public=True)
+
+    return 'https://%s.s3.amazonaws.com/%s' % (bucket, s3_filename)
+
 
 if __name__ == "__main__":
     init_logging(app.logger)

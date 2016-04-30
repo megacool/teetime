@@ -106,7 +106,6 @@ def get_font_for_line_of_width(line, font_location, desired_width):
     font_size = desired_width*size_to_width_ratio
     resulting_height = font_size/(test_font_size/height)
     font = ImageFont.truetype(font_location, int(font_size))
-    print 'Line: %s, font_size=%d, height=%d, width=%d' % (line, font_size, resulting_height, width)
     return (font, resulting_height)
 
 
@@ -123,6 +122,7 @@ def get_colors_for_word(word, n=3, recurse=True):
                 color = get_colors_for_word(alternative, recurse=False)
                 if color:
                     return color
+        return None
     except wikipedia.exceptions.PageError as exception:
         return None
 
