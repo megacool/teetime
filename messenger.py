@@ -105,11 +105,11 @@ def hello():
             except KeyError:
                 continue
 
+            recipient_id = message_wrapper['sender']['id']
             try:
                 local_image_path = teetime.create_typography(message)
                 s3_image_url = upload_to_s3(local_image_path)
                 os.remove(local_image_path)
-                recipient_id = message_wrapper['sender']['id']
 
                 product_url = get_product_url(s3_image_url)
                 tshirt_image_url = get_tshirt_image_url(product_url)
