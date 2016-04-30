@@ -14,7 +14,7 @@ loggers:
     handlers: [console]
     propagate: no
   gunicorn:
-    level: DEBUG
+    level: INFO
     handlers: [console]
   messenger:
     level: DEBUG
