@@ -4,6 +4,7 @@ in any messages that the bot receives and echos it back.
 """
 
 import logging
+import logging.config
 import os
 import requests
 import textwrap
