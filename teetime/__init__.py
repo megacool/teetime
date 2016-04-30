@@ -27,8 +27,7 @@ def create_typography(sentence):
 def _layout(sentence):
     all_lines = []
     text = sentence.strip()
-    tokens = nltk.word_tokenize(text)
-    tagged_tokens = nltk.pos_tag(tokens)
+    tagged_tokens = nltk.pos_tag(text.split())
     line = []
     for token, tag in tagged_tokens:
         if token == 'i':
