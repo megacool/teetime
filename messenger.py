@@ -169,6 +169,10 @@ def server_error(error):
 
 
 def _init_logging(app):
+    # Access the app.logger so that it configures itself and then gets the
+    # hell out of the way
+    app.logger
+
     log_config_dest = app.config.get('LOG_CONF_PATH') or 'log-conf.yaml'
     if log_config_dest:
         with open(log_config_dest) as log_config_file:
