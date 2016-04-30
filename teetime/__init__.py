@@ -34,14 +34,28 @@ def _layout(sentence):
             # should probably be uppercase
             token = 'I'
         element = Element(token, tag)
-        if tag.startswith('JJ') or (tag == 'PRP' and line and line[-1].tag != 'CC'):
-            # adjective, start on new line
+        previous_adverb = line and line[-1].tag == 'RB'
+        adverb_adjective = tag.startswith('JJ') and not previous_adverb
+        pronoun = tag == 'PRP' and line and line[-1].tag not in ('IN', 'CC')
+        previous_to = line and line[-1].tag == 'TO'
+        if (adverb_adjective) or pronoun or tag == 'CC' or tag == 'TO':
+            # start on new line
             if line:
                 all_lines.append(' '.join(e.token for e in line))
                 line = []
             line.append(element)
+        elif tag.startswith('JJ') and previous_adverb:
+            # end line
+            line.append(element)
+            all_lines.append(' '.join(e.token for e in line))
+            line = []
+        elif tag.startswith('VB') and previous_to:
+            # end line
+            line.append(element)
+            all_lines.append(' '.join(e.token for e in line))
+            line = []
         elif tag.startswith('NN'):
-            # noun, end line if prefixed by adjective, otherwise put on single
+            # end line if prefixed by adjective, otherwise put on single
             if line and line[-1].tag.startswith('JJ'):
                 line.append(element)
                 all_lines.append(' '.join(e.token for e in line))
