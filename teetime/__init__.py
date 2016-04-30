@@ -19,9 +19,9 @@ warnings.simplefilter("ignore")
 
 Element = namedtuple('Element', ['token', 'tag'])
 
-def create_typography(sentence):
+def create_typography(sentence, colors=True):
     layout = _layout(sentence)
-    return create_image(layout)
+    return create_image(layout, colors=colors)
 
 
 def _layout(sentence):
@@ -61,7 +61,7 @@ def _layout(sentence):
     return all_lines
 
 
-def create_image(layout):
+def create_image(layout, colors=True):
     font_dir = os.path.join(os.path.dirname(__file__), 'fonts')
     font_location = os.path.join(font_dir, 'MinstrelPosterNF.ttf')
 
@@ -75,7 +75,7 @@ def create_image(layout):
     for line in layout:
         font, height = get_font_for_line_of_width(line, font_location, desired_width)
         color = (255, 255, 255)
-        if len(line.split()) == 1:
+        if len(line.split()) == 1 and colors:
             _color = get_colors_for_word(line, 1)
             if _color:
                 color = tuple(_color[0])
